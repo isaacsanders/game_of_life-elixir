@@ -1,16 +1,10 @@
 defmodule GameOfLife.LifeServer do
+  import GameOfLife.Organism
   use GenServer
-  require Record
 
-  Record.defrecord(:organism, [:coordinates, :status])
-
-  @type coordinates :: {integer(), integer()}
-  @type status :: :alive | :dead
-  @type organism :: {:organism, coordinates(), status()}
-  @type board_state :: [organism()]
   @type init_opt ::
           GenServer.option()
-          | {:initial_state, [coordinates()]}
+          | {:initial_state, [GameOfLife.Organism.coordinates()]}
 
   defstruct life_board: nil
 
@@ -35,20 +29,6 @@ defmodule GameOfLife.LifeServer do
       end)
 
     :ets.insert_new(life_board, initial_state)
-
-    dead_neighbors =
-      initial_state
-      |> Enum.flat_map(fn organism(coordinates: coordinates) ->
-        GameOfLife.neighboring_coordinates(coordinates)
-      end)
-      |> Enum.map(fn coordinates ->
-        organism(coordinates: coordinates, status: :dead)
-      end)
-
-    :ets.insert_new(
-      life_board,
-      dead_neighbors
-    )
 
     {:ok, struct(__MODULE__, life_board: life_board)}
   end
@@ -86,8 +66,8 @@ defmodule GameOfLife.LifeServer do
             |> length
 
           case Map.fetch(board_state, coordinates) do
-            {:ok, organism(status: status)} ->
-              next_gen_cell_flat_mapper(coordinates, status, alive_neighbors)
+            {:ok, organism(status: :alive)} ->
+              next_gen_cell_flat_mapper(coordinates, :alive, alive_neighbors)
 
             :error ->
               next_gen_cell_flat_mapper(coordinates, :dead, alive_neighbors)
@@ -107,14 +87,12 @@ defmodule GameOfLife.LifeServer do
   def next_gen_cell_flat_mapper(coordinates, :alive, 2),
     do: [organism(coordinates: coordinates, status: :alive)]
 
-  def next_gen_cell_flat_mapper(coordinates, :alive, _),
-    do: [organism(coordinates: coordinates, status: :dead)]
+  def next_gen_cell_flat_mapper(coordinates, :alive, _), do: []
 
   def next_gen_cell_flat_mapper(_coordinates, :dead, 0), do: []
 
   def next_gen_cell_flat_mapper(coordinates, :dead, 3),
     do: [organism(coordinates: coordinates, status: :alive)]
 
-  def next_gen_cell_flat_mapper(coordinates, :dead, _),
-    do: [organism(coordinates: coordinates, status: :dead)]
+  def next_gen_cell_flat_mapper(coordinates, :dead, _), do: []
 end

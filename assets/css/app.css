@@ -6,9 +6,9 @@ html, body, main {
 }
 
 h1 {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.5);
   margin-left: 10px;
-  margin-right: 10px;
+  width: auto;
 }
 
 * {
