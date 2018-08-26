@@ -17,16 +17,13 @@ defmodule GameOfLife.LifeServer do
       :ets.new(GameOfLife.LifeServer.Board, [
         :set,
         :private,
-        keypos: 2,
         read_concurrency: true
       ])
 
     initial_state =
       opts
       |> Keyword.get(:initial_state, [])
-      |> Enum.map(fn coordinates ->
-        organism(coordinates: coordinates, status: :alive)
-      end)
+      |> Enum.map(fn {x, y} -> {{x, y}, []} end)
 
     :ets.insert_new(life_board, initial_state)
 
@@ -34,65 +31,49 @@ defmodule GameOfLife.LifeServer do
   end
 
   def handle_call(:tick, _from, server) do
-    board_state =
+    current_generation =
       server.life_board
       |> :ets.tab2list()
-      |> Enum.map(fn organism(coordinates: coordinates) = cell ->
-        {coordinates, cell}
-      end)
-      |> Map.new()
+      |> MapSet.new(fn {coordinates, []} -> coordinates end)
 
     :ets.init_table(server.life_board, fn :read ->
-      new_members =
-        board_state
-        |> Map.values()
-        |> Stream.flat_map(fn organism(coordinates: coordinates) = cell ->
+      next_generation =
+        current_generation
+        |> Stream.flat_map(fn coordinates ->
           coordinates
           |> GameOfLife.neighboring_coordinates()
-          |> Enum.map(fn neighboring_coordinates ->
-            {neighboring_coordinates, cell}
-          end)
+          |> Enum.map(&{&1, coordinates})
         end)
-        |> Enum.group_by(
-          fn {coordinates, _neighbor} ->
-            coordinates
-          end,
-          fn {_coordinates, neighbor} -> neighbor end
-        )
-        |> Stream.flat_map(fn {coordinates, neighbors} ->
-          alive_neighbors =
-            neighbors
-            |> Enum.filter(&(organism(&1, :status) == :alive))
-            |> length
+        |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+        |> Enum.flat_map(fn {coordinates, neighbors} ->
+          alive_neighbors = length(neighbors)
 
-          case Map.fetch(board_state, coordinates) do
-            {:ok, organism(status: :alive)} ->
-              next_gen_cell_flat_mapper(coordinates, :alive, alive_neighbors)
-
-            :error ->
-              next_gen_cell_flat_mapper(coordinates, :dead, alive_neighbors)
+          if MapSet.member?(current_generation, coordinates) do
+            next_gen_cell_flat_mapper(coordinates, :alive, alive_neighbors)
+          else
+            next_gen_cell_flat_mapper(coordinates, :dead, alive_neighbors)
           end
         end)
-        |> Enum.to_list()
+        |> Enum.map(&{&1, []})
 
-      {new_members, fn _ -> :end_of_input end}
+      {next_generation, fn _ -> :end_of_input end}
     end)
 
-    {:reply, :ets.tab2list(server.life_board), server}
+    {:reply,
+     server.life_board
+     |> :ets.tab2list()
+     |> Enum.map(&elem(&1, 0)), server}
   end
 
-  def next_gen_cell_flat_mapper(coordinates, :alive, 3),
-    do: [organism(coordinates: coordinates, status: :alive)]
+  def next_gen_cell_flat_mapper(coordinates, :alive, 3), do: [coordinates]
 
-  def next_gen_cell_flat_mapper(coordinates, :alive, 2),
-    do: [organism(coordinates: coordinates, status: :alive)]
+  def next_gen_cell_flat_mapper(coordinates, :alive, 2), do: [coordinates]
 
-  def next_gen_cell_flat_mapper(coordinates, :alive, _), do: []
+  def next_gen_cell_flat_mapper(_coordinates, :alive, _), do: []
 
   def next_gen_cell_flat_mapper(_coordinates, :dead, 0), do: []
 
-  def next_gen_cell_flat_mapper(coordinates, :dead, 3),
-    do: [organism(coordinates: coordinates, status: :alive)]
+  def next_gen_cell_flat_mapper(coordinates, :dead, 3), do: [coordinates]
 
-  def next_gen_cell_flat_mapper(coordinates, :dead, _), do: []
+  def next_gen_cell_flat_mapper(_coordinates, :dead, _), do: []
 end
