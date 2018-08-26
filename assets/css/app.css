@@ -22,3 +22,13 @@ svg {
   left:0;
   right:0;
 }
+
+#title {
+  position: relative;
+
+  z-index: 3;
+}
+
+#board {
+  z-index: 2;
+}
