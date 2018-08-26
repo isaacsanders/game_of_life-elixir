@@ -1,5 +1,16 @@
+<h1 id=title>
+  <a href="https://github.com/isaacsanders/game_of_life-elixir">Conway's Game of Life in Elixir</a> by <a href="https://twitter.com/isaacsanders">Isaac Sanders</a>
+</h1>
 <svg id=board width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <h1 id=title>
-    <a href="https://github.com/isaacsanders/game_of_life-elixir">Conway's Game of Life in Elixir</a> by <a href="https://twitter.com/isaacsanders">Isaac Sanders</a>
-  </h1>
 </svg>
+<div id=fileinput>
+  <p>
+    You may want to input your own designs.
+    Making a click interface for this isn&apos;t super interesting to me.
+    Instead, I wrote a lexer/parser in leex/yecc.
+    Upload an RLE file (<a href="http://www.conwaylife.com/w/index.php?title=Run_Length_Encoded">format found here</a>) and I will start an instance with the described input.
+    Examples can be found at <a href="http://pentadecathlon.com/lifeNews/">Game Of Life News</a>.
+  </p>
+
+  <input type="file" accept=".rle" id="rle" />
+<div>

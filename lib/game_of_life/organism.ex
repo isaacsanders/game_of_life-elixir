@@ -4,7 +4,7 @@ defmodule GameOfLife.Organism do
   Record.defrecord(:organism, [:coordinates, :status])
 
   @type coordinates :: {integer(), integer()}
-  @type status :: :alive | :dead
+  @type status :: :alive
   @type organism :: {:organism, coordinates(), status()}
   @type board_state :: [organism()]
 end
