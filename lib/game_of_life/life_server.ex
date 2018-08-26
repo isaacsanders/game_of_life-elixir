@@ -66,7 +66,7 @@ defmodule GameOfLife.LifeServer do
       new_members =
         board_state
         |> Map.values()
-        |> Enum.flat_map(fn organism(coordinates: coordinates) = cell ->
+        |> Stream.flat_map(fn organism(coordinates: coordinates) = cell ->
           coordinates
           |> GameOfLife.neighboring_coordinates()
           |> Enum.map(fn neighboring_coordinates ->
@@ -79,9 +79,10 @@ defmodule GameOfLife.LifeServer do
           end,
           fn {_coordinates, neighbor} -> neighbor end
         )
-        |> Enum.flat_map(fn {coordinates, neighbors} ->
+        |> Stream.flat_map(fn {coordinates, neighbors} ->
           alive_neighbors =
-            Enum.filter(neighbors, &(organism(&1, :status) == :alive))
+            neighbors
+            |> Enum.filter(&(organism(&1, :status) == :alive))
             |> length
 
           case Map.fetch(board_state, coordinates) do
@@ -92,6 +93,7 @@ defmodule GameOfLife.LifeServer do
               next_gen_cell_flat_mapper(coordinates, :dead, alive_neighbors)
           end
         end)
+        |> Enum.to_list()
 
       {new_members, fn _ -> :end_of_input end}
     end)

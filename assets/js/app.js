@@ -13,11 +13,33 @@
 // to also remove its path from "config.paths.watched".
 import "phoenix_html"
 import socket from "./socket"
+import * as d3 from "d3"
+
+const scale = 5
 
 const acorn = [
                 {x: 1, y: 0},
                                              {x: 3, y: 1},
   {x: 0, y: 2}, {x: 1, y: 2},                              {x: 4, y: 2}, {x: 5, y: 2}, {x: 6, y: 2}
+]
+
+const block = [
+  {x: 0, y: 0}, {x: 1, y: 0},
+  {x: 0, y: 1}, {x: 1, y: 1}
+]
+
+const faulty_test = [
+  {x: 0, y: 0}, {x: 1, y: 0},                                           {x: 7, y: 0}, {x: 8, y: 0},
+  {x: 0, y: 1}, {x: 1, y: 1},                                           {x: 7, y: 1}, {x: 8, y: 1},
+
+
+                                            {x: 4, y: 4},
+                                            {x: 4, y: 5},
+                                            {x: 4, y: 6},
+
+
+  {x: 0, y: 9}, {x: 1, y: 9},                                             {x: 7, y: 9}, {x: 8, y: 9},
+  {x: 0, y: 10}, {x: 1, y: 10},                                           {x: 7, y: 10}, {x: 8, y: 10},
 ]
 
 const pentadecathalon = [
@@ -35,23 +57,46 @@ const pentadecathalon = [
   {x: 0, y: 12}, {x: 1, y: 12}, {x: 2, y: 12}
 ]
 
-let channel = socket.channel("game_of_life", {
-  "initial_state": acorn
-})
-channel.join()
-  .receive("ok", resp => { console.log("Joined successfully", resp) })
-  .receive("error", resp => { console.log("Unable to join", resp) })
-
-setInterval(() => {
-channel.push("tick", {})
-  .receive("ok", ({board_state}) => {
-    var board_state_el = document.getElementById("board-state")
-    board_state_el.innerText = board_state
+document.addEventListener("DOMContentLoaded", (event) => {
+  let channel = socket.channel("game_of_life", {
+    "initial_state": acorn
   })
-}, 100)
 
-// Import local files
-//
-// Local files can be imported directly using relative
-// paths "./socket" or full ones "web/static/js/socket".
+  channel.join()
+    .receive("ok", resp => { console.log("Joined successfully", resp) })
+    .receive("error", resp => { console.log("Unable to join", resp) })
 
+  // d3.select("svg")
+  //   .selectAll("rect")
+  //   .data(acorn)
+  //   .enter().append("rect")
+  //   .attr("x", ({x}) => (x * 10))
+  //   .attr("y", ({y}) => (y * 10))
+  //   .attr("width", "10px")
+  //   .attr("height", "10px")
+  //   .attr("fill", "black")
+
+  setInterval(() => {
+    channel.push("tick", {}).receive("ok", ({bounds, board_state}) => {
+      var {left, top, right, bottom} = bounds
+
+      var svg = d3.select("svg")
+        .attr("viewBox", `0 0 ${right - left + 1} ${bottom - top + 1}`)
+
+      var rects = svg
+      .selectAll("rect")
+      .data(board_state)
+      .attr("x", ({x}) => (x))
+      .attr("y", ({y}) => (y))
+      .attr("width", "1px")
+      .attr("height", "1px")
+      .attr("fill", "black")
+
+      rects
+      .enter().append("rect")
+      rects
+      .exit().remove()
+    })
+  }, 100)
+
+})

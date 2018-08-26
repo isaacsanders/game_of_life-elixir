@@ -1,5 +1,5 @@
 <h1>
   <a href="https://github.com/isaacsanders/game_of_life-elixir">Conway's Game of Life in Elixir</a> by <a href="https://twitter.com/isaacsanders">Isaac Sanders</a>
 </h1>
-<pre id="board-state">
-</pre>
+<svg width="auto" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+</svg>

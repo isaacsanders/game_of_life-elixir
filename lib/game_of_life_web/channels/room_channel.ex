@@ -21,12 +21,31 @@ defmodule GameOfLifeWeb.RoomChannel do
   end
 
   def handle_in("tick", _params, socket) do
-    reply =
+    live_cells =
       socket.assigns[:life_server]
       |> GenServer.call(:tick)
-      |> GameOfLife.Printer.to_string()
+      |> Enum.filter(fn {:organism, _coordinates, status} -> status == :alive end)
 
-    {:reply, {:ok, %{board_state: reply}}, socket}
+    {left, top, right, bottom} = bounds = GameOfLife.Normalize.bounds(live_cells)
+
+    reply =
+      live_cells
+      |> GameOfLife.Normalize.normalized(bounds)
+      |> Enum.map(fn {:organism, {x, y}, :alive} ->
+        %{x: x, y: y}
+      end)
+
+    {:reply,
+     {:ok,
+      %{
+        bounds: %{
+          left: left,
+          top: top,
+          right: right,
+          bottom: bottom
+        },
+        board_state: reply
+      }}, socket}
   end
 
   def terminate(reason, socket) do

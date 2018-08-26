@@ -1,8 +1,24 @@
 /* This file is for your main application css. */
-body {
-  height: 1vh;
+html, body, main {
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
-pre {
-  height: 60vh;
+h1 {
+  background-color: white;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+* {
+  font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif
+}
+
+svg {
+  position: fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
 }
